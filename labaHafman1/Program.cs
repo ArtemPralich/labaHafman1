@@ -10,111 +10,59 @@ namespace labaHafman1
     {
         static void Main(string[] args)
         {
-            Dictionary<char, string> shifrSymbols = new Dictionary<char, string>();
-            Dictionary<char, int> symbolRate = new Dictionary<char, int>();
-            string contentFile = ReadFile.Read("text.txt");
-            char[] chars = contentFile.ToCharArray();
+            Dictionary<char, int> symbols = new Dictionary<char, int>();
 
+            string contentFile = ReadFile.Read("text.txt");
+
+            char[] chars = contentFile.ToCharArray();
             for (int i = 0, n = chars.Length; i < n; i++)
             {
-                if (symbolRate.ContainsKey(chars[i])) symbolRate[chars[i]]++;
-                else symbolRate.Add(chars[i], 1);
+                if (symbols.ContainsKey(chars[i])) symbols[chars[i]]++;
+                else symbols.Add(chars[i], 1);
             }
-            List<Node> nodes = createNodesFirstLine(symbolRate);
-            Node finalNodes = createTree(nodes)[0];
+
+            List<Node> nodes = createNodesFirstLine(symbols);
+            Node finalNodes = TreeActions.createTree(nodes)[0];
+
+            Dictionary<char, string> shifrSymbols = new Dictionary<char, string>();
             createCodeSymbol(shifrSymbols, finalNodes, "", false);
-            outputTree(finalNodes, 0);
+
+            //TreeActions.outputTree(finalNodes, 0);
+            
             foreach( var a in shifrSymbols)
             {
+                if( a.Key == 10)
+                {
+                    Console.WriteLine("\\n" + "-" + a.Value);
+                    continue;
+                }
+                if (a.Key == 13)
+                {
+                    Console.WriteLine("\\r" + "-" + a.Value);
+                    continue;
+                }
                 Console.WriteLine(a.Key + "-" + a.Value);
             }
-            Console.WriteLine("Текст который нужно сжать");
-            Console.WriteLine(contentFile);
-            Console.WriteLine("Сжатый текст");
-            string str = compression(chars, shifrSymbols);
-            Console.WriteLine(str);
-            Console.WriteLine("Расжатый текст");
-            string destr = "";
-            
-            destr = decompression(str.ToCharArray(), finalNodes); 
-            Console.WriteLine(destr);
 
-            Console.ReadKey();
-            Writer(str);
-            string final = Reader();
-            Console.WriteLine("Строка:" + final);
+            string compresStr = compression(chars, shifrSymbols);
+
+            string destr = "";
+            destr = decompression(compresStr.ToCharArray(), finalNodes);
+
+            WriteFile.WriterBit(compresStr, "final.txt");
+            string final = ReadFile.Reader("final.txt");
+            //Console.WriteLine("Строка:" + final);
 
             destr = decompression(final.ToCharArray(), finalNodes);
-            Console.WriteLine(destr);
-        }
+            WriteFile.Writer(destr, "finalText.txt");
 
-        public static void Writer(string str)
-        {
-            //Console.WriteLine(str.Length%8);
-            //if (str.Length % 8 != 0)
-            //{
-            //    int value = !(str[str.Length - 1] == '1') ? 1 : 0;
-            //    for (int i = 0; i < 8 - (str.Length+1 % 8) + 8; i++)
-            //    {
-            //        str += $"{value}";
-            //    }
-            //}
-
-            Console.WriteLine(str.Length);
-            Console.WriteLine(str);
-            
-            BitArray ba = new BitArray(str.Length + 16 - str.Length % 8);
-            for (int i = 0; i < str.Length + 16 - str.Length % 8; i++)
-            {
-                if (i < str.Length) ba[i] = str[i] == '1';
-                if (i >= str.Length)
-                {
-                    ba[i] = !(str[str.Length - 1] == '1');
-                }
-            }
-            byte[] bytes = new byte[str.Length / 8 + 2];
-            ba.CopyTo(bytes, 0);
-            //BitArray ba1 = new BitArray(8 - str.Length % 8 + 8);
-
-            //for (int i = 0; i < 8 - str.Length % 8 + 8; i++)
-            //{
-            //    //Console.WriteLine(1);
-            //    ba1[i] = !ba[str.Length - 1];
-            //}
-            //ba1.CopyTo(bytes, 0);
-            Stream s = new FileStream(@"./../../../finalText.txt", FileMode.Create);
-            s.Write(bytes, 0, bytes.Length);
-            s.Flush();
-            s.Close();
-        }
-        public static string Reader()
-        {
-            string finalString = "";
-
-            FileStream file = new FileStream(@"./../../../finalText.txt", FileMode.Open, FileAccess.Read);
-            byte[] buf = new byte[10];
-            int r = -1;
-            byte b;
-            while (r != 0)
-            {
-                r = file.Read(buf, 0, buf.Length);
-                for (int j = 0; j < r; j++)
-                {
-                    b = buf[j];
-                    for (int i = 0; i < 8; i++)
-                        finalString += $"{(b >> i) & 1}";
-                        //Console.Write((b >> i) & 1);
-                    //Console.Write((j + 1) % 4 == 0 ? '\n' : ' ');
-                }
-            }
-            char[] buffStr = finalString.ToCharArray();
-            for (int i = finalString.Length-1; i>0; i--)
-            {
-                if (buffStr[i] != buffStr[finalString.Length - 1]) return new string(buffStr.Take(i + 1).ToArray());
-            }
-            file.Close();
-            return "";
-
+            //Console.WriteLine(destr);
+            //Console.WriteLine(destr);
+            //Console.WriteLine(str);
+            //Console.WriteLine("Расжатый текст");
+            //Console.WriteLine("Текст который нужно сжать");
+            //Console.WriteLine(contentFile);
+            //Console.WriteLine("Сжатый текст");
         }
 
         public static string decompression(char[] chars, Node node)
@@ -165,21 +113,6 @@ namespace labaHafman1
                 shifrSymbols.Add(node.symbol, code);
             }
         }
-
-        public static void outputTree(Node node, int countTabs)
-        {
-            if (node.left != null)
-            {
-                outputTree(node.left, countTabs + 1);
-            }
-            for (int i = 0; i < countTabs; i++) Console.Write("      ");
-            Console.WriteLine($"{node.weigth} - {node.symbol} - {node.bin}");
-            if (node.right != null)
-            {
-                outputTree(node.right, countTabs + 1);
-            }
-        }
-
         public static List<Node> createNodesFirstLine(Dictionary<char, int> symbolRate)
         {
             List<Node> nodes = new List<Node>();
@@ -189,32 +122,6 @@ namespace labaHafman1
             }
             return nodes;
         }
-        public static List<Node> createTree(List<Node> nodes)
-        {
-            if (nodes.Count == 1) return nodes;
-            Node node;
-            Node minnode1 = null;
-            Node minnode2 = null;
-            foreach (var item in nodes)
-            {
-                if(minnode1 == null || item.weigth <= minnode1.weigth)
-                {
-                    minnode2 = minnode1;
-                    minnode1 = item;
-                }
-                else if(minnode2 == null && minnode1.weigth != item.weigth)
-                {
-                    minnode2 = item;
-                }
-            }
-            node = new Node() { weigth = minnode1.weigth + minnode2.weigth, left = minnode1, right = minnode2 };
-            minnode1.bin = 0;
-            minnode2.bin = 1;
-            nodes.Remove(minnode2);
-            nodes.Remove(minnode1);
-            nodes.Add(node);
-            createTree(nodes);
-            return nodes;
-        }
+        
     }
 }
