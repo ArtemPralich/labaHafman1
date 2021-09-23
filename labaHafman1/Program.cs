@@ -27,23 +27,6 @@ namespace labaHafman1
             Dictionary<char, string> shifrSymbols = new Dictionary<char, string>();
             createCodeSymbol(shifrSymbols, finalNodes, "", false);
 
-            //TreeActions.outputTree(finalNodes, 0);
-            
-            foreach( var a in shifrSymbols)
-            {
-                if( a.Key == 10)
-                {
-                    Console.WriteLine("\\n" + "-" + a.Value);
-                    continue;
-                }
-                if (a.Key == 13)
-                {
-                    Console.WriteLine("\\r" + "-" + a.Value);
-                    continue;
-                }
-                Console.WriteLine(a.Key + "-" + a.Value);
-            }
-
             string compresStr = compression(chars, shifrSymbols);
 
             string destr = "";
@@ -56,6 +39,11 @@ namespace labaHafman1
             destr = decompression(final.ToCharArray(), finalNodes);
             WriteFile.Writer(destr, "finalText.txt");
 
+            int weight = outputDictionary(shifrSymbols, symbols);
+            if (checkCraftMackmillan(shifrSymbols)) Console.WriteLine("Неравенство выполняется");
+            else Console.WriteLine("Неравенство не выполняется");
+            Console.WriteLine("Энтропия: " + calcEntropy(shifrSymbols, symbols, weight));
+            Console.WriteLine("Средняя длина кодового слова: " + avgWord(shifrSymbols));
             //Console.WriteLine(destr);
             //Console.WriteLine(destr);
             //Console.WriteLine(str);
@@ -63,6 +51,35 @@ namespace labaHafman1
             //Console.WriteLine("Текст который нужно сжать");
             //Console.WriteLine(contentFile);
             //Console.WriteLine("Сжатый текст");
+        }
+
+        public static double calcEntropy(Dictionary<char, string> shifrSymbol, Dictionary<char, int> symbols, int weight)
+        {
+            double sum = 0;
+            foreach(var symbol in symbols)
+            {
+                double p = (double)symbol.Value / weight;
+                sum += p * (double)Math.Log(p);
+            }
+            return -sum;
+        }
+        public static double avgWord(Dictionary<char, string> shifrSymbol)
+        {
+            double sum = 0; 
+            
+            foreach(var symbol in shifrSymbol)
+            {
+                sum += symbol.Value.Length;
+            }
+            return sum/shifrSymbol.Count;
+        }
+        public static bool checkCraftMackmillan(Dictionary<char, string> shifrSymbols)
+        {
+            double sum = 0;
+            foreach(var symbol in shifrSymbols){
+                sum += Math.Pow(2, -symbol.Value.Length);
+            }
+            return sum <= 1.0d;
         }
 
         public static string decompression(char[] chars, Node node)
@@ -82,10 +99,37 @@ namespace labaHafman1
                     bufNode = node;
                 }
             }
-            Console.WriteLine(byte1);
+            //Console.WriteLine(byte1);
             return shifrStr;
         }
-
+        public static int outputDictionary(Dictionary<char, string> shifrSymbols, Dictionary<char, int> symbols)
+        {
+            int count = 0;
+            foreach(var a in symbols)
+            {
+                count += a.Value;
+            }
+            Console.WriteLine("{0,5}   |{1,15}| {2,15}| {3, 6}", "symb",  "%    ", "code   ", "length");
+            Console.WriteLine("------------------------------------------------");
+            foreach (var a in shifrSymbols)
+            {
+                if (a.Key == 10)
+                {
+                    Console.WriteLine("{0,5}   |{1,15}| {2,15}| {3, 5}", "\\n", Math.Round(((decimal)symbols[a.Key] / count), 5), a.Value, a.Value.Length);
+                    //Console.WriteLine("\\n" + "-" + a.Value);
+                    continue;
+                }
+                if (a.Key == 13)
+                {
+                    Console.WriteLine("{0,5}   |{1,15}| {2,15}| {3, 5}", "\\r", Math.Round(((decimal)symbols[a.Key] / count),5), a.Value, a.Value.Length);
+                    //Console.WriteLine("\\r" + "-" + a.Value);
+                    continue;
+                }
+                Console.WriteLine("{0,5}   |{1,15}| {2,15}| {3, 5}", a.Key, Math.Round(((decimal)symbols[a.Key] / count), 5), a.Value, a.Value.Length);
+                //Console.WriteLine(a.Key + "-" + a.Value);
+            }
+            return count;
+        }
         public static string compression(char[] chars, Dictionary<char, string> shifrSymbols)
         {
             string shifrStr = "";
