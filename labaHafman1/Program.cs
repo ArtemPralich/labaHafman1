@@ -41,7 +41,11 @@ namespace labaHafman1
 
             Console.ReadKey();
             Writer(str);
-            Reader();
+            string final = Reader();
+            Console.WriteLine("Строка:" + final);
+
+            destr = decompression(final.ToCharArray(), finalNodes);
+            Console.WriteLine(destr);
         }
 
         public static void Writer(string str)
@@ -83,8 +87,9 @@ namespace labaHafman1
             s.Flush();
             s.Close();
         }
-        public static void Reader()
+        public static string Reader()
         {
+            string finalString = "";
 
             FileStream file = new FileStream(@"./../../../finalText.txt", FileMode.Open, FileAccess.Read);
             byte[] buf = new byte[10];
@@ -97,11 +102,19 @@ namespace labaHafman1
                 {
                     b = buf[j];
                     for (int i = 0; i < 8; i++)
-                        Console.Write((b >> i) & 1);
+                        finalString += $"{(b >> i) & 1}";
+                        //Console.Write((b >> i) & 1);
                     //Console.Write((j + 1) % 4 == 0 ? '\n' : ' ');
                 }
             }
+            char[] buffStr = finalString.ToCharArray();
+            for (int i = finalString.Length-1; i>0; i--)
+            {
+                if (buffStr[i] != buffStr[finalString.Length - 1]) return new string(buffStr.Take(i + 1).ToArray());
+            }
             file.Close();
+            return "";
+
         }
 
         public static string decompression(char[] chars, Node node)
