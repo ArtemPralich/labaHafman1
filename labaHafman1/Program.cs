@@ -12,6 +12,7 @@ namespace labaHafman1
         {
             Dictionary<char, int> symbols = new Dictionary<char, int>();
 
+
             string contentFile = ReadFile.Read("text.txt");
 
             char[] chars = contentFile.ToCharArray();
