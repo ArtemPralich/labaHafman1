@@ -15,6 +15,8 @@ namespace labaHafman1
 
             string contentFile = ReadFile.Read("text.txt");
 
+            ///sfdsdfds
+            ///
             char[] chars = contentFile.ToCharArray();
             for (int i = 0, n = chars.Length; i < n; i++)
             {
